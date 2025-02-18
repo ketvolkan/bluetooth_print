@@ -119,31 +119,28 @@ public void onDetachedFromActivity() {
   }
 
   private void setup(
-          final BinaryMessenger messenger,
-          final Application application,
-          final Activity activity,
-          final PluginRegistry.Registrar registrar,
-          final ActivityPluginBinding activityBinding) {
+    final BinaryMessenger messenger,
+    final Application application,
+    final Activity activity,
+    final ActivityPluginBinding activityBinding) {
     synchronized (initializationLock) {
-      Log.i(TAG, "setup");
-      this.activity = activity;
-      this.application = application;
-      this.context = application;
-      channel = new MethodChannel(messenger, NAMESPACE + "/methods");
-      channel.setMethodCallHandler(this);
-      stateChannel = new EventChannel(messenger, NAMESPACE + "/state");
-      stateChannel.setStreamHandler(stateHandler);
-      mBluetoothManager = (BluetoothManager) application.getSystemService(Context.BLUETOOTH_SERVICE);
-      mBluetoothAdapter = mBluetoothManager.getAdapter();
-      if (registrar != null) {
-        // V1 embedding setup for activity listeners.
-        registrar.addRequestPermissionsResultListener(this);
-      } else {
-        // V2 embedding setup for activity listeners.
+        Log.i(TAG, "setup");
+        this.activity = activity;
+        this.application = application;
+        this.context = application;
+        channel = new MethodChannel(messenger, NAMESPACE + "/methods");
+        channel.setMethodCallHandler(this);
+        stateChannel = new EventChannel(messenger, NAMESPACE + "/state");
+        stateChannel.setStreamHandler(stateHandler);
+
+        mBluetoothManager = (BluetoothManager) application.getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = mBluetoothManager.getAdapter();
+
+        // V2 embedding setup for activity listeners
         activityBinding.addRequestPermissionsResultListener(this);
-      }
     }
-  }
+}
+
 
   private void tearDown() {
     Log.i(TAG, "teardown");
