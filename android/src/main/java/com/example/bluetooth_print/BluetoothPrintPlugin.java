@@ -402,4 +402,3 @@ public void onCancel(Object o) {
     }
     context.unregisterReceiver(mReceiver);  // Receiver'ı kaldırıyoruz.
 }
-}
