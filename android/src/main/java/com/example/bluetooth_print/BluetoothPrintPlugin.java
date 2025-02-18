@@ -186,9 +186,6 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
             case "disconnect":
                 result.success(disconnect());
                 break;
-            case "destroy":
-                result.success(destroy());
-                break;
             case "print":
             case "printReceipt":
             case "printLabel":
