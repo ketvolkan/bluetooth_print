@@ -319,7 +319,7 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
 
     private boolean disconnect() {
         if (threadPool != null) {
-            stopThreadPool();
+            threadPool.stopThreadPool();
             threadPool = null;
         }
 
