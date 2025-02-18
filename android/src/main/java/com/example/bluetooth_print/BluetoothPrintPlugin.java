@@ -70,16 +70,22 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
           Manifest.permission.ACCESS_FINE_LOCATION
   };
 
-  public static void registerWith(Registrar registrar) {
-    final BluetoothPrintPlugin instance = new BluetoothPrintPlugin();
+@Override
+public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
+    // Flutter plugin binding ile işlemi başlatıyoruz
+    this.pluginBinding = flutterPluginBinding;
+    this.channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/methods");
+    this.channel.setMethodCallHandler(this);
+    this.stateChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/state");
+    this.stateChannel.setStreamHandler(stateHandler);
 
-    Activity activity = registrar.activity();
-    Application application = null;
-    if (registrar.context() != null) {
-      application = (Application) (registrar.context().getApplicationContext());
-    }
-    instance.setup(registrar.messenger(), application, activity, registrar, null);
-  }
+    // BluetoothManager ve BluetoothAdapter kurulumunu yapıyoruz
+    Application application = (Application) flutterPluginBinding.getApplicationContext();
+    this.mBluetoothManager = (BluetoothManager) application.getSystemService(Context.BLUETOOTH_SERVICE);
+    this.mBluetoothAdapter = mBluetoothManager.getAdapter();
+}
+
+
 
   public BluetoothPrintPlugin(){
   }
@@ -95,21 +101,21 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
     pluginBinding = null;
   }
 
-  @Override
-  public void onAttachedToActivity(ActivityPluginBinding binding) {
+@Override
+public void onAttachedToActivity(ActivityPluginBinding binding) {
     activityBinding = binding;
-    setup(
-            pluginBinding.getBinaryMessenger(),
-            (Application) pluginBinding.getApplicationContext(),
-            activityBinding.getActivity(),
-            null,
-            activityBinding);
-  }
+    activity = binding.getActivity();
+    setup(pluginBinding.getBinaryMessenger(),
+          (Application) pluginBinding.getApplicationContext(),
+          activity,
+          null,
+          binding);
+}
 
-  @Override
-  public void onDetachedFromActivity() {
+@Override
+public void onDetachedFromActivity() {
     tearDown();
-  }
+}
 
   @Override
   public void onDetachedFromActivityForConfigChanges() {
