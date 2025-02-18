@@ -28,9 +28,8 @@ import io.flutter.plugin.common.EventChannel.EventSink;
 import io.flutter.plugin.common.EventChannel.StreamHandler;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener;
-
+import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,15 +84,7 @@ public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBindin
     this.mBluetoothAdapter = mBluetoothManager.getAdapter();
 }
 
-
-
   public BluetoothPrintPlugin(){
-  }
-
-
-  @Override
-  public void onAttachedToEngine(FlutterPluginBinding binding) {
-    pluginBinding = binding;
   }
 
   @Override
