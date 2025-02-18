@@ -356,10 +356,28 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
         return false;
     }
 
-    private static StreamHandler stateHandler = new StreamHandler() {
-        @Override
-        public void onListen(Object arguments, EventSink events) {
-                @Override
+    private final StreamHandler stateHandler = new StreamHandler() {
+    private EventSink sink;
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        final String action = intent.getAction();
+        Log.d(TAG, "stateStreamHandler, current action: " + action);
+
+        if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+          threadPool = null;
+          sink.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1));
+        } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+          sink.success(1);
+        } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+          threadPool = null;
+          sink.success(0);
+        }
+      }
+    };
+
+    @Override
     public void onListen(Object o, EventSink eventSink) {
       sink = eventSink;
       IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
@@ -367,12 +385,12 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
       filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
       filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
       context.registerReceiver(mReceiver, filter);
-        }
+    }
 
-        @Override
-        public void onCancel(Object arguments) {
-             sink = null;
+    @Override
+    public void onCancel(Object o) {
+      sink = null;
       context.unregisterReceiver(mReceiver);
-        }
-    };
+    }
+  };
 }
