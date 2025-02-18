@@ -67,14 +67,12 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-        // Flutter plugin binding ile işlemi başlatıyoruz
         this.pluginBinding = flutterPluginBinding;
         this.channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/methods");
         this.channel.setMethodCallHandler(this);
         this.stateChannel = new EventChannel(flutterPluginBinding.getBinaryMessenger(), NAMESPACE + "/state");
         this.stateChannel.setStreamHandler(stateHandler);
 
-        // BluetoothManager ve BluetoothAdapter kurulumunu yapıyoruz
         Application application = (Application) flutterPluginBinding.getApplicationContext();
         this.mBluetoothManager = (BluetoothManager) application.getSystemService(Context.BLUETOOTH_SERVICE);
         this.mBluetoothAdapter = mBluetoothManager.getAdapter();
@@ -130,7 +128,6 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
             mBluetoothManager = (BluetoothManager) application.getSystemService(Context.BLUETOOTH_SERVICE);
             mBluetoothAdapter = mBluetoothManager.getAdapter();
 
-            // V2 embedding setup for activity listeners
             activityBinding.addRequestPermissionsResultListener(this);
         }
     }
@@ -355,48 +352,50 @@ public class BluetoothPrintPlugin implements FlutterPlugin, ActivityAware, Metho
 
         return false;
     }
+
     private final StreamHandler stateHandler = new StreamHandler() {
-    private EventSink sink;  // EventSink'in sınıfın genelinde bir değişken olarak tanımlanması gerekebilir.
+        private EventSink sink;
 
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            Log.d(TAG, "stateStreamHandler, current action: " + action);
+        private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final String action = intent.getAction();
+                Log.d(TAG, "stateStreamHandler, current action: " + action);
 
-            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                threadPool = null;
-                if (sink != null) {
-                    sink.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1));  // Bluetooth durumu
-                }
-            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                if (sink != null) {
-                    sink.success(1);  // Bluetooth cihazı bağlandı
-                }
-            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                threadPool = null;
-                if (sink != null) {
-                    sink.success(0);  // Bluetooth cihazı bağlantısı kesildi
+                if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+                    threadPool = null;
+                    if (sink != null) {
+                        sink.success(intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1));
+                    }
+                } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+                    if (sink != null) {
+                        sink.success(1);
+                    }
+                } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                    threadPool = null;
+                    if (sink != null) {
+                        sink.success(0);
+                    }
                 }
             }
+        };
+
+        @Override
+        public void onListen(Object o, EventSink eventSink) {
+            sink = eventSink;
+            IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+            filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+            filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+            filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+            context.registerReceiver(mReceiver, filter);
+        }
+
+        @Override
+        public void onCancel(Object o) {
+            if (sink != null) {
+                sink.endOfStream();
+            }
+            context.unregisterReceiver(mReceiver);
         }
     };
-
-    @Override
-    public void onListen(Object o, EventSink eventSink) {
-        sink = eventSink;  // sink'i eventSink ile eşliyoruz.
-        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        context.registerReceiver(mReceiver, filter);  // Receiver'ı kaydediyoruz.
-    }
-
-    @Override
-    public void onCancel(Object o) {
-        if (sink != null) {
-            sink.endOfStream();  // Stream sonlandırma işlemi yapılabilir.
-        }
-        context.unregisterReceiver(mReceiver);  // Receiver'ı kaldırıyoruz.
-    }
-};
+}
